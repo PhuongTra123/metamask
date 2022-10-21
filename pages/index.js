@@ -57,7 +57,7 @@ export default function Home() {
     <div className="h-[100vh] flex items-center justify-center m-auto">
       <div className="flex flex-col items-center w-[500px] h-[360px] bg-[powderblue]">
         <div className="mb-4">
-          <Image src="/metamask.jpg" alt="metamask" width={500} height={200} />
+          <Image src="/metamask.png" alt="metamask" width={500} height={200} />
         </div>
         <button
           onClick={connect}
