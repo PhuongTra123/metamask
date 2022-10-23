@@ -1,14 +1,12 @@
-import { useWeb3React } from "@web3-react/core";
 import { useEffect, useState } from "react";
-import Web3 from "web3";
-import { injected } from "../components/wallet/connectors";
+// import Web3 from "web3";
 import { ethers } from "ethers";
 import Image from "next/image";
 
 export default function Home() {
-  const { active, account, library, connector, activate, deactivate } =
-    useWeb3React();
   const [balance, setBalance] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   async function connect() {
     try {
@@ -19,8 +17,50 @@ export default function Home() {
           "Please install MetaMask browser extension to interact"
         );
       }
-      await activate(injected);
-      localStorage.setItem("isWalletConnected", true);
+      const bsc = {
+        chainId: `0x${Number(56).toString(16)}`,
+        chainName: "Binance Smart Chain Mainnet",
+        nativeCurrency: {
+          name: "Binance Chain Native Token",
+          symbol: "BNB",
+          decimals: 18,
+        },
+        rpcUrls: [
+          "https://bsc-dataseed1.binance.org",
+          "https://bsc-dataseed2.binance.org",
+          "https://bsc-dataseed3.binance.org",
+          "https://bsc-dataseed4.binance.org",
+          "https://bsc-dataseed1.defibit.io",
+          "https://bsc-dataseed2.defibit.io",
+          "https://bsc-dataseed3.defibit.io",
+          "https://bsc-dataseed4.defibit.io",
+          "https://bsc-dataseed1.ninicoin.io",
+          "https://bsc-dataseed2.ninicoin.io",
+          "https://bsc-dataseed3.ninicoin.io",
+          "https://bsc-dataseed4.ninicoin.io",
+          "wss://bsc-ws-node.nariox.org",
+        ],
+        blockExplorerUrls: ["https://bscscan.com"],
+      };
+      await window.ethereum.request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            ...bsc,
+          },
+        ],
+      });
+      setAccount(window.ethereum.selectedAddress);
+      await window.ethereum
+        .request({ method: "eth_requestAccounts" })
+        .then((result) => {
+          setConnButtonText("Wallet Connected");
+          setAccount(result[0]);
+        })
+        .catch((error) => {
+          setErrorMessage(error.message);
+        });
+
       const provider = new ethers.providers.Web3Provider(web3.currentProvider);
       const signer = provider.getSigner();
       const bal = await signer.getBalance();
@@ -30,28 +70,14 @@ export default function Home() {
       console.log(ex);
     }
   }
+
   async function disconnect() {
     try {
-      deactivate();
-      localStorage.setItem("isWalletConnected", false);
+      window.location.reload();
     } catch (ex) {
       console.log(ex);
     }
   }
-
-  useEffect(() => {
-    const connectWalletOnPageLoad = async () => {
-      if (localStorage?.getItem("isWalletConnected") === "true") {
-        try {
-          await activate(injected);
-          localStorage.setItem("isWalletConnected", true);
-        } catch (ex) {
-          console.log(ex);
-        }
-      }
-    };
-    connectWalletOnPageLoad();
-  }, []);
 
   return (
     <div className="h-[100vh] flex items-center justify-center m-auto">
@@ -63,9 +89,9 @@ export default function Home() {
           onClick={connect}
           className="py-2 mb-4 text-lg font-bold text-white rounded-lg w-56 bg-blue-600 hover:bg-blue-800"
         >
-          {active ? 'MetaMask connected' : 'Connect to MetaMask'}
+          {account ? "MetaMask connected" : "Connect to MetaMask"}
         </button>
-        {active ? (
+        {account ? (
           <div>
             <div>
               <b> Address: </b>
